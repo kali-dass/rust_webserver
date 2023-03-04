@@ -3,6 +3,8 @@ use std::{
     env,
     net::{TcpListener, TcpStream},
     io::{prelude::*, BufReader},
+    thread,
+    time::Duration,
 };
 
 fn main() {
@@ -12,7 +14,9 @@ fn main() {
     for stream in listner.incoming(){
         let streams= stream.unwrap();
 
-        handle_connections(streams)
+        thread::spawn(|| {
+            handle_connections(streams);
+        });
     }
 }
 
@@ -42,11 +46,13 @@ fn handle_connections(mut stream: TcpStream){
     let buf_reader = BufReader::new(&mut stream);
     let request_line = buf_reader.lines().next().unwrap().unwrap();
 
-    let (status_line, filename) = if request_line == "GET / HTTP/1.1" {
-        ("HTTP/1.1 200 OK","hello.html")
-    }
-    else {
-        ("HTTP/1.1 404 NOT FOUND","404.html")
+    let (status_line, filename) = match &request_line[..]{
+        "GET / HTTP/1.1" => ("HTTP/1.1 200 OK","hello.html"),
+        "GET /sleep HTTP/1.1" => {
+            thread::sleep(Duration::from_secs(5));
+            ("HTTP/1.1 200 OK","hello.html")
+        }
+        _ =>   ("HTTP/1.1 404 NOT FOUND","404.html")
     };
 
     let contents = fs::read_to_string(filename).unwrap();

@@ -6,15 +6,17 @@ use std::{
     thread,
     time::Duration,
 };
+use rust_webserver::ThreadPool;
 
 fn main() {
     let listner = TcpListener::bind("127.0.0.1:7878").unwrap();
     env::set_var("RUST_BACKTRACE", "full");
+    let pool = ThreadPool::new(4);
 
     for stream in listner.incoming(){
         let streams= stream.unwrap();
 
-        thread::spawn(|| {
+        pool.execute(|| {
             handle_connections(streams);
         });
     }

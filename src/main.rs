@@ -20,6 +20,8 @@ fn main() {
             handle_connections(streams);
         });
     }
+
+    println!("Shutting down.");
 }
 
 /*
